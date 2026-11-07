@@ -9,14 +9,13 @@ typedef enum Type {
     NUMBER =0 ,
     OPERATION,
     VARIABLE,
-    PARANTATHESE,
+    DELIMITER,
 } Type; 
 /**
- * Holds the input expression and its associated stack.
+ * Holds the input expression.
  */
 typedef struct {
     char **word;
-    struct Stack *stack;
 } Calc;
 
 
@@ -40,7 +39,7 @@ Calc * getCalc(void);
 bool IsSameOpen(char open, char close);
 
 /**
- * Frees a calculation and its owned expression, stack.
+ * Frees a calculation and its owned expression.
  *
  * @param calc Calculation to free; must not be NULL.
  */
@@ -52,10 +51,10 @@ void FreeCalc(Calc *calc);
  * @param calc Calculation whose expression to validate; must not be NULL.
  * @return true if the brackets are balanced, otherwise false.
  */
-bool IsParantatheseValide(Calc *calc);
+bool AreDelimitersValid(Calc *calc);
 
 /**
- * Prints the expression and its current stack .
+ * Prints the expression.
  *
  * @param calc Calculation to print; must not be NULL.
  */
