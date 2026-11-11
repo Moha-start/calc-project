@@ -19,8 +19,12 @@ int main(int argc, char **argv) {
     if (result == NULL) {
         return EXIT_FAILURE;
     }
-
-    printf("%s\n", result);
+    trim_trailing_zeros(result);
+    
+    for (uint i=0; words[i]!=NULL;i++){
+        printf("%s", words[i]);
+    }
+    printf(" = %s\n", result);
     free(result);
     return EXIT_SUCCESS;
 }

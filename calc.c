@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include "calc.h"
 Calc * getCalc(void) {
     uint capacity=32;
@@ -90,6 +91,25 @@ bool AreDelimitersValid(Calc * calc){
     return result;
 }
 
+void trim_trailing_zeros(char *str) {
+    // Only trim if the string contains a decimal point
+    if (strchr(str, '.') != NULL) {
+        int len = strlen(str);
+        
+        // Start from the last character before the null terminator
+        for (int i = len - 1; i >= 0; i--) {
+            if (str[i] == '0') {
+                str[i] = '\0'; // Remove the zero
+            } else if (str[i] == '.') {
+                str[i] = '\0'; // Remove the decimal point and stop
+                break;
+            } else {
+                break; // Found a non-zero digit, stop trimming
+            }
+        }
+    }
+}
+
 uint countOpeningDelimiters(Calc *calc){
     uint count=0;
     for (uint arg=0;calc->word[arg]!=NULL;arg++){
@@ -104,7 +124,8 @@ uint countOpeningDelimiters(Calc *calc){
 void printCalc(Calc * calc){
     printf("word ->");
     for (uint i=0;calc->word[i]!=NULL;i++){
-        printf(" %s |",calc->word[i]);
+        trim_trailing_zeros(calc->word[i]);
+        printf("|%s|",calc->word[i]);
     }
     printf("\n");
 }
@@ -149,7 +170,7 @@ static void split(Calc * calc){
 }
 
 uint calctype(char c){
-    if (c >= '0' && c <= '9') {
+    if ((c >= '0' && c <= '9') || (c == '.' || c== ',')) {
         return NUMBER;
     } 
     else if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}') {
@@ -217,6 +238,7 @@ static void combineDigits(Calc * calc){
     calc->word=tokens;
 
 }
+
 uint sizeCalc(Calc *calc){
     uint size=0;
     for (;calc->word[size]!=NULL;size++);
@@ -251,33 +273,39 @@ void moveResult(Calc * calc, uint first, uint last, char * result){
     }
 }
 
-
-int fromStringToInt(char * c) {
-    if (c[0]=='-'){
-        int result = 0;    
-        for (uint i = 1; c[i] != '\0'; i++) {
-            result = result * 10 + (c[i] - '0');
+double fromStringToDouble(char * c) {
+    bool point=false;
+    bool start=0;
+    double ent = 0;
+    double dic = 0 ;
+    uint size=0;
+    if (c[0]=='-')start=1;
+    for (uint i = start; c[i] != '\0'; i++) {
+            if (c[i]!='.' && c[i]!=','){
+                if(point){
+                    dic=dic * 10 + (c[i] - '0');
+                    size++;
+                }
+                else ent = ent * 10 + (c[i] - '0');
+            }
+            else {
+                point=true;
+            }
         }
-        
-        return -result;
-    }else{
-        int result = 0;    
-        for (uint i = 0; c[i] != '\0'; i++) {
-            result = result * 10 + (c[i] - '0');
-        }
-        
-        return result;
-    }
+    return (start?-1:1)*(ent + dic/pow(10,size));
     
 }
 
-char *fromIntToString(int number) {
-    char *result = malloc(12 * sizeof(char));
+char *fromDoobleToString(double number) {
+    // Increased buffer size to 64 to safely hold a double
+    char *result = malloc(64 * sizeof(char));
     if (result == NULL) {
         fprintf(stderr, "not enough space\n");
         return NULL; 
     }
-    snprintf(result, 12, "%d", number);
+    
+    // Changed %d to %f for double
+    snprintf(result, 64, "%f", number);
 
     return result;
 }
@@ -294,9 +322,9 @@ bool isMixOperation(Calc * calc) {
     return found[0] && found[1]; 
 }
 
-int calculateSimple(int first,char operation,int last){
+double calculateSimple(double first,char operation,double last){
     
-    int result;
+    double result;
         if(operation=='*'){
             result =first*last;
         }
@@ -325,51 +353,51 @@ bool isPrio(Calc *calc,uint * index){
 char * solveSimple(Calc * calc){
     uint size=sizeCalc(calc);
     if (size==3){
-        int first=fromStringToInt(calc->word[0]);
-        int last=fromStringToInt(calc->word[3]);
+        double first=fromStringToDouble(calc->word[0]);
+        double last=fromStringToDouble(calc->word[3]);
         char operation=calc->word[1][0];
-        int result=calculateSimple(first,operation,last);
-        return fromIntToString(result);
+        double result=calculateSimple(first,operation,last);
+        return fromDoobleToString(result);
     }else if (isMixOperation(calc)){
         
         uint index;
         bool prio=isPrio(calc,&index);
         
         while (prio){
-            int first=fromStringToInt(calc->word[index-1]);
+            double first=fromStringToDouble(calc->word[index-1]);
             char operation=calc->word[index][0];
-            int last=fromStringToInt(calc->word[index+1]);
-            char * result=fromIntToString(calculateSimple(first,operation,last));
+            double last=fromStringToDouble(calc->word[index+1]);
+            char * result=fromDoobleToString(calculateSimple(first,operation,last));
             moveResult(calc, index-1, index+1,result);
             prio=isPrio(calc,&index);
         }
-        int first=fromStringToInt(calc->word[0]);
+        double first=fromStringToDouble(calc->word[0]);
         char operation=calc->word[1][0];
-        int last=fromStringToInt(calc->word[2]);
+        double last=fromStringToDouble(calc->word[2]);
         first=calculateSimple(first,operation,last);
         uint size=sizeCalc(calc);
         index=3;
         while (size>index+1){
             operation=calc->word[index][0];
-            last=fromStringToInt(calc->word[index+1]);
+            last=fromStringToDouble(calc->word[index+1]);
             first=calculateSimple(first,operation,last);
             index+=2;
         }
-        return fromIntToString(first);
+        return fromDoobleToString(first);
     }else{  
-        int first=fromStringToInt(calc->word[0]);
+        double first=fromStringToDouble(calc->word[0]);
         char operation=calc->word[1][0];
-        int last=fromStringToInt(calc->word[2]);
+        double last=fromStringToDouble(calc->word[2]);
         first=calculateSimple(first,operation,last);
         uint size=sizeCalc(calc);
         uint index=3;
         while (size>index+1){
             operation=calc->word[index][0];
-            last=fromStringToInt(calc->word[index+1]);
+            last=fromStringToDouble(calc->word[index+1]);
             first=calculateSimple(first,operation,last);
             index+=2;
         }
-        return fromIntToString(first);
+        return fromDoobleToString(first);
     }
 }
 
@@ -389,7 +417,6 @@ void evaluateParenthesizedExpression(Calc * calc){
     }
     uint last=index-2;
     
-    printf("index = %u | first = %u | last = %u \n",index,first,last);
     char ** par=malloc((last-first+2)*sizeof(char *));
     if (par==NULL){
         FreeCalc(calc);

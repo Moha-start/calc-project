@@ -1,7 +1,5 @@
-                -
-              /   \
-             -    1256
-           /   \
-           3    +
-              /   \
-             2    25
+missing :
+  FromIntToChar
+  make sure other places are ok with this
+has been don : 
+  the fonction return a good bool
