@@ -176,7 +176,7 @@ uint calctype(char c){
     else if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}') {
         return DELIMITER;
     } 
-    else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+    else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c =='^' || c == '%') {
         return OPERATION;
     } 
     else if (isalpha(c)){
@@ -323,7 +323,6 @@ bool isMixOperation(Calc * calc) {
 }
 
 double calculateSimple(double first,char operation,double last,Calc * calc){
-    
     double result;
         if(operation=='*'){
             result =first*last;
@@ -341,6 +340,11 @@ double calculateSimple(double first,char operation,double last,Calc * calc){
         }
         else if (operation=='-'){
             result =first-last;
+        }
+        else if(operation=='^'){
+            result=pow(first,last);
+        }else if(operation=='%'){
+            result = fmod(first, last);
         }
         return result;
 }
