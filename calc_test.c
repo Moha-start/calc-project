@@ -206,10 +206,10 @@ bool test_isMixOperation(void) {
 }
 
 bool test_calculateSimple(void) {
-    if (calculateSimple(4.0, '+', 2.0) != 6.0) return false;
-    if (calculateSimple(4.0, '-', 2.0) != 2.0) return false;
-    if (calculateSimple(4.0, '*', 2.0) != 8.0) return false;
-    if (calculateSimple(4.0, '/', 2.0) != 2.0) return false;
+    if (calculateSimple(4.0, '+', 2.0,NULL) != 6.0) return false;
+    if (calculateSimple(4.0, '-', 2.0,NULL) != 2.0) return false;
+    if (calculateSimple(4.0, '*', 2.0,NULL) != 8.0) return false;
+    if (calculateSimple(4.0, '/', 2.0,NULL) != 2.0) return false;
     return true;
 }
 

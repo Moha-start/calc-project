@@ -1,5 +1,10 @@
-missing :
-  FromIntToChar
-  make sure other places are ok with this
-has been don : 
-  the fonction return a good bool
+Exponentiation/Powers (e.g., x^y)
+Modulo operator (%)
+Square root and nth root operations
+Trigonometric functions (sin, cos, tan)
+Logarithmic functions (log, ln)
+Standard mathematical constants (e.g., π, e)
+Percentage calculations
+Scientific notation support (e.g., 1.5e3)
+Variable assignment and evaluation (the code recognizes alphabetic characters as VARIABLE but lacks the mathematical logic to process them)
+Continuous interactive mode (the program terminates after a single calculation)

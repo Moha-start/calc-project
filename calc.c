@@ -322,13 +322,18 @@ bool isMixOperation(Calc * calc) {
     return found[0] && found[1]; 
 }
 
-double calculateSimple(double first,char operation,double last){
+double calculateSimple(double first,char operation,double last,Calc * calc){
     
     double result;
         if(operation=='*'){
             result =first*last;
         }
         else if (operation=='/'){
+            if(last==0){
+                fprintf(stderr,"error division by 0\n");
+                FreeCalc(calc);
+                exit(EXIT_FAILURE);
+            }
             result =first/last;
         }
         else if (operation=='+'){
@@ -356,7 +361,7 @@ char * solveSimple(Calc * calc){
         double first=fromStringToDouble(calc->word[0]);
         double last=fromStringToDouble(calc->word[3]);
         char operation=calc->word[1][0];
-        double result=calculateSimple(first,operation,last);
+        double result=calculateSimple(first,operation,last,calc);
         return fromDoobleToString(result);
     }else if (isMixOperation(calc)){
         
@@ -367,20 +372,20 @@ char * solveSimple(Calc * calc){
             double first=fromStringToDouble(calc->word[index-1]);
             char operation=calc->word[index][0];
             double last=fromStringToDouble(calc->word[index+1]);
-            char * result=fromDoobleToString(calculateSimple(first,operation,last));
+            char * result=fromDoobleToString(calculateSimple(first,operation,last,calc));
             moveResult(calc, index-1, index+1,result);
             prio=isPrio(calc,&index);
         }
         double first=fromStringToDouble(calc->word[0]);
         char operation=calc->word[1][0];
         double last=fromStringToDouble(calc->word[2]);
-        first=calculateSimple(first,operation,last);
+        first=calculateSimple(first,operation,last,calc);
         uint size=sizeCalc(calc);
         index=3;
         while (size>index+1){
             operation=calc->word[index][0];
             last=fromStringToDouble(calc->word[index+1]);
-            first=calculateSimple(first,operation,last);
+            first=calculateSimple(first,operation,last,calc);
             index+=2;
         }
         return fromDoobleToString(first);
@@ -388,13 +393,13 @@ char * solveSimple(Calc * calc){
         double first=fromStringToDouble(calc->word[0]);
         char operation=calc->word[1][0];
         double last=fromStringToDouble(calc->word[2]);
-        first=calculateSimple(first,operation,last);
+        first=calculateSimple(first,operation,last,calc);
         uint size=sizeCalc(calc);
         uint index=3;
         while (size>index+1){
             operation=calc->word[index][0];
             last=fromStringToDouble(calc->word[index+1]);
-            first=calculateSimple(first,operation,last);
+            first=calculateSimple(first,operation,last,calc);
             index+=2;
         }
         return fromDoobleToString(first);

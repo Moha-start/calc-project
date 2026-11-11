@@ -159,7 +159,7 @@ bool isMixOperation(Calc *calc);
  * @param last The right-hand operand.
  * @return The result of applying operation to first and last.
  */
-double calculateSimple(double first, char operation, double last);
+double calculateSimple(double first, char operation, double last,Calc * calc);
 
 /**
  * Finds the next multiplication or division operation in an expression.
