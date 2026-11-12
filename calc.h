@@ -169,7 +169,7 @@ double calculateSimple(double first, char operation, double last,Calc * calc);
  *              It is written only when such an operation is found.
  * @return true if a multiplication or division was found; otherwise false.
  */
-bool isPrio(Calc *calc, uint *index);
+bool getPrio(Calc *calc, uint *index);
 
 /**
  * Evaluates an expression that contains numeric operands and basic arithmetic

@@ -1,0 +1,20 @@
+
+## a corriger
+    - ajoute que ^ vien avant les autre
+    - ajoute que % est aussi avant
+
+## Square root and nth root operations
+
+## Trigonometric functions (sin, cos, tan)
+
+## Logarithmic functions (log, ln)
+
+## Standard mathematical constants (e.g., π, e)
+
+## Percentage calculations
+
+## Scientific notation support (e.g., 1.5e3)
+
+## Variable assignment and evaluation (the code recognizes alphabetic characters as VARIABLE but lacks the mathematical logic to process them)
+
+## Continuous interactive mode (the program terminates after a single calculation)

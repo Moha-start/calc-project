@@ -213,11 +213,11 @@ bool test_calculateSimple(void) {
     return true;
 }
 
-bool test_isPrio(void) {
+bool test_getPrio(void) {
     const char *w[] = {"1", "+", "2", "*", "3"};
     Calc *c = create_test_calc(5, w);
     uint idx = 0;
-    if (!isPrio(c, &idx) || idx != 3) {
+    if (!getPrio(c, &idx) || idx != 3) {
         FreeCalc(c);
         return false;
     }
@@ -306,8 +306,8 @@ int main(int argc, char * argv[]){
         ok = test_isMixOperation();
     } else if(strcmp("calculateSimple", argv[1])==0){
         ok = test_calculateSimple();
-    } else if(strcmp("isPrio", argv[1])==0){
-        ok = test_isPrio();
+    } else if(strcmp("getPrio", argv[1])==0){
+        ok = test_getPrio();
     } else if(strcmp("solveSimple", argv[1])==0){
         ok = test_solveSimple();
     } else if(strcmp("evaluateParenthesizedExpression", argv[1])==0){

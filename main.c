@@ -5,26 +5,34 @@
 int main(int argc, char **argv) {
     Calc *input = NULL;
     char **words;
+    
     if (argc == 1) {
         input = getCalc();
         words = input->word;
     } else {
         words = argv + 1;
     }
-
     char *result = solve(words);
+    
+    if (result == NULL) {
+        if (input != NULL) {
+            FreeCalc(input);
+        }
+        return EXIT_FAILURE;
+    }
+
+    trim_trailing_zeros(result);
+    
+    for (unsigned int j = 0; words[j] != NULL; j++) {
+        printf("%s", words[j]);
+    }
+    printf(" = %s\n", result);
+    
+    free(result);
+
     if (input != NULL) {
         FreeCalc(input);
     }
-    if (result == NULL) {
-        return EXIT_FAILURE;
-    }
-    trim_trailing_zeros(result);
     
-    for (uint i=0; words[i]!=NULL;i++){
-        printf("%s", words[i]);
-    }
-    printf(" = %s\n", result);
-    free(result);
     return EXIT_SUCCESS;
 }

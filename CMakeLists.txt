@@ -9,10 +9,10 @@ set(CMAKE_C_FLAGS "-std=c99 -g -Wall")
 add_library(Stack SHARED stack.c)
 
 add_library(Calc SHARED calc.c)
-target_link_libraries(Calc Stack m)
+target_link_libraries(Calc Stack)
 
 add_executable(calculator main.c)
-target_link_libraries(calculator Calc m)
+target_link_libraries(calculator Calc)
 
 add_executable(stack stack_main.c)
 target_link_libraries(stack Stack)
@@ -21,7 +21,7 @@ target_link_libraries(stack Stack)
 # Unit testing executable
 # -----------------------------------------------------
 add_executable(calc_test calc_test.c)
-target_link_libraries(calc_test Calc Stack m)
+target_link_libraries(calc_test Calc Stack)
 
 
 # -----------------------------------------------------
@@ -42,7 +42,7 @@ add_test(test_calc_fromStringToDouble ./calc_test fromStringToDouble)
 add_test(test_calc_fromDoobleToString ./calc_test fromDoobleToString)
 add_test(test_calc_isMixOperation ./calc_test isMixOperation)
 add_test(test_calc_calculateSimple ./calc_test calculateSimple)
-add_test(test_calc_isPrio ./calc_test isPrio)
+add_test(test_calc_getPrio ./calc_test getPrio)
 add_test(test_calc_solveSimple ./calc_test solveSimple)
 add_test(test_calc_evaluateParenthesizedExpression ./calc_test evaluateParenthesizedExpression)
 add_test(test_calc_solve ./calc_test solve)
@@ -67,7 +67,7 @@ if(VALGRIND_COMMAND)
     add_test(test_mem_fromDoobleToString ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test fromDoobleToString)
     add_test(test_mem_isMixOperation ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test isMixOperation)
     add_test(test_mem_calculateSimple ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test calculateSimple)
-    add_test(test_mem_isPrio ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test isPrio)
+    add_test(test_mem_getPrio ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test getPrio)
     add_test(test_mem_solveSimple ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test solveSimple)
     add_test(test_mem_evaluateParenthesizedExpression ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test evaluateParenthesizedExpression)
     add_test(test_mem_solve ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test solve)

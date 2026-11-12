@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 #include "calc.h"
+
 Calc * getCalc(void) {
     uint capacity=32;
     uint length=0;
@@ -57,6 +57,22 @@ bool IsSameOpen(char open,char close){
     else if(open=='(') return close==')';
     else if(open=='{') return close=='}';
     else return false;
+}
+
+double power(double first,double last){
+    double result=1;
+    while (last>0){
+        result*=first;
+        last--;
+    }
+    return result;
+}
+
+double mod(double first ,double last){
+    while (first>last){
+        first=first-last;
+    }
+    return last;
 }
 
 void FreeCalc(Calc * calc){
@@ -292,7 +308,7 @@ double fromStringToDouble(char * c) {
                 point=true;
             }
         }
-    return (start?-1:1)*(ent + dic/pow(10,size));
+    return (start?-1:1)*(ent + dic/power(10,size));
     
 }
 
@@ -342,72 +358,60 @@ double calculateSimple(double first,char operation,double last,Calc * calc){
             result =first-last;
         }
         else if(operation=='^'){
-            result=pow(first,last);
+            result=power(first,last);
         }else if(operation=='%'){
-            result = fmod(first, last);
+            result = mod(first, last);
         }
         return result;
 }
 
-bool isPrio(Calc *calc,uint * index){
-    for(uint i=0;calc->word[i]!=NULL;i++){
-        if(calc->word[i][0]=='*'||calc->word[i][0]=='/'){
-            *index=i;
-            return true;
-        }
-    }
-    return false;
+uint getValueOpeartion(char * c) {
+    if (c[0] == '^') return 0;
+    else if (c[0] == '*' || c[0] == '/' || c[0] == '%') return 1; // Same priority, left-to-right
+    else if (c[0] == '+' || c[0] == '-') return 2;                // Same priority, left-to-right
+    return 99; // Fallback
 }
 
-char * solveSimple(Calc * calc){
-    uint size=sizeCalc(calc);
-    if (size==3){
-        double first=fromStringToDouble(calc->word[0]);
-        double last=fromStringToDouble(calc->word[3]);
-        char operation=calc->word[1][0];
-        double result=calculateSimple(first,operation,last,calc);
-        return fromDoobleToString(result);
-    }else if (isMixOperation(calc)){
-        
-        uint index;
-        bool prio=isPrio(calc,&index);
-        
-        while (prio){
-            double first=fromStringToDouble(calc->word[index-1]);
-            char operation=calc->word[index][0];
-            double last=fromStringToDouble(calc->word[index+1]);
-            char * result=fromDoobleToString(calculateSimple(first,operation,last,calc));
-            moveResult(calc, index-1, index+1,result);
-            prio=isPrio(calc,&index);
+bool isPrio(char * c1, char * c2) {
+    // True ONLY if c1 has strictly higher priority (lower number) than c2.
+    // This preserves left-to-right order for operations of the same priority.
+    return getValueOpeartion(c1) < getValueOpeartion(c2);
+}
+
+bool getPrio(Calc *calc, uint *index) {
+    char *last = NULL;
+    bool found = false;
+
+    for (uint i = 0; calc->word[i] != NULL; i++) {
+        if (getCalctype(calc->word[i]) == OPERATION) {
+            // If it's the first operation we see, OR it has strictly higher priority
+            if (last == NULL || isPrio(calc->word[i], last)) {
+                last = calc->word[i];
+                *index = i;
+                found = true;
+            }
         }
-        double first=fromStringToDouble(calc->word[0]);
-        char operation=calc->word[1][0];
-        double last=fromStringToDouble(calc->word[2]);
-        first=calculateSimple(first,operation,last,calc);
-        uint size=sizeCalc(calc);
-        index=3;
-        while (size>index+1){
-            operation=calc->word[index][0];
-            last=fromStringToDouble(calc->word[index+1]);
-            first=calculateSimple(first,operation,last,calc);
-            index+=2;
-        }
-        return fromDoobleToString(first);
-    }else{  
-        double first=fromStringToDouble(calc->word[0]);
-        char operation=calc->word[1][0];
-        double last=fromStringToDouble(calc->word[2]);
-        first=calculateSimple(first,operation,last,calc);
-        uint size=sizeCalc(calc);
-        uint index=3;
-        while (size>index+1){
-            operation=calc->word[index][0];
-            last=fromStringToDouble(calc->word[index+1]);
-            first=calculateSimple(first,operation,last,calc);
-            index+=2;
-        }
-        return fromDoobleToString(first);
     }
+    return found;
+}
+
+char * solveSimple(Calc * calc) {
+    uint index;
+    
+    // Continually find and solve the highest priority operation 
+    // until there are no operations left.
+    while (getPrio(calc, &index)) {
+        double first = fromStringToDouble(calc->word[index - 1]);
+        char operation = calc->word[index][0];
+        double last = fromStringToDouble(calc->word[index + 1]);
+        
+        char *result = fromDoobleToString(calculateSimple(first, operation, last, calc));
+        moveResult(calc, index - 1, index + 1, result);
+    }
+    
+    // Once the loop ends, the entire expression has been reduced to one number at index 0.
+    double final_result = fromStringToDouble(calc->word[0]);
+    return fromDoobleToString(final_result);
 }
 
 void evaluateParenthesizedExpression(Calc * calc){
