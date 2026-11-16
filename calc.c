@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "calc.h"
+#include "math.h"
 
 Calc * getCalc(void) {
     uint capacity=32;
@@ -59,28 +60,10 @@ bool IsSameOpen(char open,char close){
     else return false;
 }
 
-double power(double first,double last){
-    double result=1;
-    while (last>0){
-        result*=first;
-        last--;
-    }
-    return result;
-}
-
-double mod(double first ,double last){
-    while (first>last){
-        first=first-last;
-    }
-    return last;
-}
-
 void FreeCalc(Calc * calc){
     for (uint i=0;calc->word[i]!=NULL;i++) {
         free(calc->word[i]);
     }
-    //printf("finished split\n");
-
     free(calc->word);
     free(calc);
 }
@@ -108,33 +91,44 @@ bool AreDelimitersValid(Calc * calc){
 }
 
 void trim_trailing_zeros(char *str) {
-    // Only trim if the string contains a decimal point
     if (strchr(str, '.') != NULL) {
         int len = strlen(str);
         
-        // Start from the last character before the null terminator
         for (int i = len - 1; i >= 0; i--) {
             if (str[i] == '0') {
-                str[i] = '\0'; // Remove the zero
+                str[i] = '\0'; 
             } else if (str[i] == '.') {
-                str[i] = '\0'; // Remove the decimal point and stop
+                str[i] = '\0';
                 break;
             } else {
-                break; // Found a non-zero digit, stop trimming
+                break;
             }
         }
     }
 }
 
-uint countOpeningDelimiters(Calc *calc){
+uint countOpeningDelimiters(Calc * calc){
     uint count=0;
-    for (uint arg=0;calc->word[arg]!=NULL;arg++){
-        for (uint i=0;calc->word[arg][i]!='\0';i++){
-            char current=calc->word[arg][i];
-            if(current=='(' || current=='[' || current=='{') count++;
+    for (uint index=0;calc->word[index]!=NULL;index++){
+        char first=calc->word[index][0];
+        if(first=='(' || first=='[' || first=='{'){
+            if (index==0 || !isSingleOperation(calc->word[index-1])) count++;
         }
     }
-    return count;   
+    return count;
+}
+
+char * solveStr(char *c){
+    char ** list=malloc(2*sizeof(char *));
+    if (list == NULL) {
+        fprintf(stderr, "not enough space\n");
+        return NULL;
+    }
+    list[0]=c;
+    list[1]=NULL;
+    char * res=solve(list);
+    free(list);
+    return res;
 }
 
 void printCalc(Calc * calc){
@@ -200,13 +194,29 @@ uint calctype(char c){
     } else return 99;
 } 
 
+bool isSingleOperation(char *c){
+    char ln[]="ln";
+    char log[]="log";
+    char sin[]="sin";
+    char cos[]="cos";
+    char tan[]="tan";
+    if (strcmp(c,ln)==0) return true;
+    else if (strcmp(c,log)==0) return true;
+    else if (strcmp(c,sin)==0) return true;
+    else if (strcmp(c,cos)==0) return true;
+    else if (strcmp(c,tan)==0) return true;
+    else return false;
+}
+
 uint getCalctype(char *c){
     if(strlen(c)==1) return calctype(c[0]);
+    else if(isSingleOperation(c)) return SINGLEOPERATION;
     else return NUMBER;
 
 }
 
 static void combineDigits(Calc * calc){
+    // TODO : add the replacement of e and PI
     split(calc);
 
     size_t count=0;
@@ -220,19 +230,38 @@ static void combineDigits(Calc * calc){
     }
 
     size_t token_count=0;
-    for (size_t i=0;i<count;){
+    for (size_t i=0; i<count;) {
         size_t length=1;
+        
         if(calctype(calc->word[i][0])==NUMBER){
-            while(i+length<count &&
-                  calctype(calc->word[i+length][0])==NUMBER){
+            while(i+length<count && calctype(calc->word[i+length][0])==NUMBER){
                 length++;
             }
         }
-        if(calc->word[i][0]=='-' && (i==0 || calctype(calc->word[i-1][0])==OPERATION)){
+        else if(calc->word[i][0]=='-' && (i==0 || calctype(calc->word[i-1][0])==OPERATION)){
             while(i+length < count && calctype(calc->word[i+length][0])==NUMBER){
                 length++;
             }
         }
+        else if(calctype(calc->word[i][0])==VARIABLE){
+            while(i+length < count && calctype(calc->word[i+length][0])==VARIABLE){
+                length++;
+            }
+        }
+        else if(calctype(calc->word[i][0])==DELIMITER && 
+                (calc->word[i][0]=='(' || calc->word[i][0]=='[' || calc->word[i][0]=='{')) {
+            
+            if (token_count > 0 && isSingleOperation(tokens[token_count-1])) {
+                int depth = 1;
+                while(i+length < count && depth > 0) {
+                    char c = calc->word[i+length][0];
+                    if (c == '(' || c == '[' || c == '{') depth++;
+                    else if (c == ')' || c == ']' || c == '}') depth--;
+                    length++;
+                }
+            }
+        }
+
         tokens[token_count]=malloc(length+1);
         if(tokens[token_count]==NULL){
             for(size_t j=0;j<token_count;j++) free(tokens[j]);
@@ -252,7 +281,6 @@ static void combineDigits(Calc * calc){
     for(size_t i=0;i<count;i++) free(calc->word[i]);
     free(calc->word);
     calc->word=tokens;
-
 }
 
 uint sizeCalc(Calc *calc){
@@ -312,25 +340,23 @@ double fromStringToDouble(char * c) {
     
 }
 
-char *fromDoobleToString(double number) {
-    // Increased buffer size to 64 to safely hold a double
+char * fromDoobleToString(double number) {
     char *result = malloc(64 * sizeof(char));
     if (result == NULL) {
         fprintf(stderr, "not enough space\n");
         return NULL; 
     }
     
-    // Changed %d to %f for double
     snprintf(result, 64, "%f", number);
 
     return result;
 }
 
 bool isMixOperation(Calc * calc) {
-    bool found[2] = {false, false}; // 0: +-, 1: */
+    bool found[2] = {false, false};
     
     for (uint i = 0; calc->word[i] != NULL; i++) {
-        if(getCalctype(calc->word[i]) == OPERATION) {
+        if(getCalctype(calc->word[i]) == OPERATION || getCalctype(calc->word[i]) == SINGLEOPERATION) {
             if(calc->word[i][0] == '-' || calc->word[i][0] == '+') found[0] = true;
             else if(calc->word[i][0] == '*' || calc->word[i][0] == '/') found[1] = true;
         }
@@ -366,25 +392,35 @@ double calculateSimple(double first,char operation,double last,Calc * calc){
 }
 
 uint getValueOpeartion(char * c) {
-    if (c[0] == '^') return 0;
-    else if (c[0] == '*' || c[0] == '/' || c[0] == '%') return 1; // Same priority, left-to-right
-    else if (c[0] == '+' || c[0] == '-') return 2;                // Same priority, left-to-right
-    return 99; // Fallback
+    uint prio=0;
+    if (isSingleOperation(c)){
+        return prio;
+    }
+    prio++;
+    if (c[0] == '^') {
+        return prio;
+    }
+    prio++;
+    if (c[0] == '*' || c[0] == '/' || c[0] == '%'){
+        return prio;
+    }
+    prio++;
+    if (c[0] == '+' || c[0] == '-') {
+        return prio;
+        }
+    return 99;
 }
 
 bool isPrio(char * c1, char * c2) {
-    // True ONLY if c1 has strictly higher priority (lower number) than c2.
-    // This preserves left-to-right order for operations of the same priority.
     return getValueOpeartion(c1) < getValueOpeartion(c2);
 }
 
-bool getPrio(Calc *calc, uint *index) {
+bool getPrio(Calc *calc, uint * index) {
     char *last = NULL;
     bool found = false;
 
     for (uint i = 0; calc->word[i] != NULL; i++) {
-        if (getCalctype(calc->word[i]) == OPERATION) {
-            // If it's the first operation we see, OR it has strictly higher priority
+        if (getCalctype(calc->word[i]) == OPERATION || getCalctype(calc->word[i]) == SINGLEOPERATION) {
             if (last == NULL || isPrio(calc->word[i], last)) {
                 last = calc->word[i];
                 *index = i;
@@ -395,26 +431,137 @@ bool getPrio(Calc *calc, uint *index) {
     return found;
 }
 
+void fromStringToDoubleDelimiteur(char * number,char ** value){
+    if(number[0]=='('){
+        uint size1=0;
+        uint size2=0;
+        bool isfirst=true;
+        for (uint index=1;number[index]!='\0';index++){
+            if(number[index]==','){
+                isfirst=false;
+            }else{
+                if(isfirst) size1++;
+                else size2++;
+            }
+        }
+        size2>0 ? size2--:size1--;
+        char * nbFirst=malloc(size1 *sizeof(char)+1);
+        if (nbFirst==NULL){
+            fprintf(stderr,"Not enagh space\n");
+            exit(EXIT_FAILURE);
+        }
+        char * nbSecond=NULL;
+        if (size2!=0){
+            nbSecond=malloc(size2 *sizeof(char)+1);
+            if (nbSecond==NULL){
+                fprintf(stderr,"Not enagh space\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        uint index=1;
+        for (;index<size1+1;index++)nbFirst[index-1]=number[index];
+        nbFirst[index-1]='\0';
+        index++;
+        for (;index<size2+size1+2;index++)nbSecond[index-size1]=number[index];
+        if(!isfirst) nbSecond[size2]='\0';
+        value[0]=solveStr(nbFirst);
+        if (size2!=0) value[1]=solveStr(nbSecond);
+        free(nbFirst);
+        free(nbSecond);
+    }else{
+        fprintf(stderr,"a Single Opearation must start with (\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+char * calculateSingleOpearation(char * opearation,char * number){
+    char ln[]="ln";
+    char log[]="log";
+    char sin[]="sin";
+    char cos[]="cos";
+    char tan[]="tan";
+    bool is_deg=true;
+    double result = 0.0;
+    char ** values = malloc(2*sizeof(char *));
+    if (values==NULL){
+        // TODO : impliment
+        fprintf(stderr,"Not enagh space\n");
+        exit(EXIT_FAILURE);
+    }
+    fromStringToDoubleDelimiteur(number,values);
+    double nb=fromStringToDouble(values[0]);
+    if (strcmp(opearation,log)==0){
+        
+        fprintf(stderr,"Not yet added -> log\n");
+        exit(EXIT_FAILURE);
+    } else if (strcmp(opearation,ln)==0){
+        if (nb <= 0) {
+            fprintf(stderr,"there you have given to ln a negative or 0 number\n");
+            exit(EXIT_FAILURE);
+        }
+
+        double y = (nb - 1.0) / (nb + 1.0);
+        double y2 = y * y; 
+        double current_y = y;
+
+        for (uint i = 1; i < (PRECISION * 2)+5; i = i + 2) {
+            result = result + (current_y / i);
+            current_y = current_y * y2; 
+        }
+        result = result * 2.0;
+    } else if (strcmp(opearation,sin)==0){
+        result = trigonometrie(nb,true,is_deg);
+    } else if (strcmp(opearation,cos)==0){
+        result = trigonometrie(nb,false,is_deg);
+    } else if (strcmp(opearation,tan)==0){ 
+        result = trigonometrie(nb,true,is_deg)/trigonometrie(nb,false,is_deg);
+    }
+    return fromDoobleToString(result);
+}
+
+char * solveSingleOperation(Calc * calc,uint index){
+    char * operation=calc->word[index];
+    char ** calculation = malloc(2 * sizeof(char *));
+    if (calculation == NULL) {
+        fprintf(stderr, "there no space left\n");
+        exit(EXIT_FAILURE);
+    }
+
+    calculation[0] = malloc(strlen(calc->word[index+1]) + 1);
+    if (calculation[0] == NULL) {
+        fprintf(stderr, "there no space left\n");
+        free(calculation);
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(calculation[0], calc->word[index+1]);
+
+    calculation[1] = NULL;
+    char * number =solve(calculation);
+    char * result=calculateSingleOpearation(operation,number);
+    free(calculation[0]);
+    free(calculation);
+    return result;
+}
+
 char * solveSimple(Calc * calc) {
     uint index;
     
-    // Continually find and solve the highest priority operation 
-    // until there are no operations left.
     while (getPrio(calc, &index)) {
+        char * result;
         double first = fromStringToDouble(calc->word[index - 1]);
         char operation = calc->word[index][0];
         double last = fromStringToDouble(calc->word[index + 1]);
+        result = fromDoobleToString(calculateSimple(first, operation, last, calc));
         
-        char *result = fromDoobleToString(calculateSimple(first, operation, last, calc));
         moveResult(calc, index - 1, index + 1, result);
     }
     
-    // Once the loop ends, the entire expression has been reduced to one number at index 0.
     double final_result = fromStringToDouble(calc->word[0]);
     return fromDoobleToString(final_result);
 }
 
-void evaluateParenthesizedExpression(Calc * calc){
+void evaluateDelimitersExpression(Calc * calc){
     uint index=0;
     for(;calc->word[index]!=NULL && getCalctype(calc->word[index])!=DELIMITER;index++);
     uint first=index+1;
@@ -452,7 +599,17 @@ void evaluateParenthesizedExpression(Calc * calc){
     free(par);
 }
 
-char *solve(char **words) {
+void evaluateSimpleOperation(Calc *calc){
+    for (uint index=1;calc->word[index]!=NULL;index++){
+        char first=calc->word[index][0];
+        if (first=='('&& isSingleOperation(calc->word[index-1])){
+            char * result = calculateSingleOpearation(calc->word[index-1],calc->word[index]);
+            moveResult(calc,index-1,index,result);
+        }
+    }
+}
+
+char * solve(char ** words) {
     if (words == NULL || words[0] == NULL) {
         fprintf(stderr, "no calculation provided\n");
         return NULL;
@@ -497,10 +654,12 @@ char *solve(char **words) {
         fprintf(stderr, "a parenthesis is not closed\n");
         return NULL;
     }
-    uint openingDelimiters=countOpeningDelimiters(calc);
+    
     combineDigits(calc);
+    evaluateSimpleOperation(calc);
+    uint openingDelimiters=countOpeningDelimiters(calc);
     if (openingDelimiters>0){
-        evaluateParenthesizedExpression(calc);
+        evaluateDelimitersExpression(calc);
     }
     
     char * solution=solveSimple(calc);

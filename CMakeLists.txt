@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(calculator C)
 
 include(CTest)
@@ -8,7 +8,8 @@ set(CMAKE_C_FLAGS "-std=c99 -g -Wall")
 
 add_library(Stack SHARED stack.c)
 
-add_library(Calc SHARED calc.c)
+# Ajout de math.c à la bibliothèque Calc
+add_library(Calc SHARED calc.c math.c)
 target_link_libraries(Calc Stack)
 
 add_executable(calculator main.c)
@@ -44,7 +45,7 @@ add_test(test_calc_isMixOperation ./calc_test isMixOperation)
 add_test(test_calc_calculateSimple ./calc_test calculateSimple)
 add_test(test_calc_getPrio ./calc_test getPrio)
 add_test(test_calc_solveSimple ./calc_test solveSimple)
-add_test(test_calc_evaluateParenthesizedExpression ./calc_test evaluateParenthesizedExpression)
+add_test(test_calc_evaluateDelimitersExpression ./calc_test evaluateDelimitersExpression)
 add_test(test_calc_solve ./calc_test solve)
 
 # -----------------------------------------------------
@@ -69,6 +70,6 @@ if(VALGRIND_COMMAND)
     add_test(test_mem_calculateSimple ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test calculateSimple)
     add_test(test_mem_getPrio ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test getPrio)
     add_test(test_mem_solveSimple ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test solveSimple)
-    add_test(test_mem_evaluateParenthesizedExpression ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test evaluateParenthesizedExpression)
+    add_test(test_mem_evaluateDelimitersExpression ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test evaluateDelimitersExpression)
     add_test(test_mem_solve ${VALGRIND_COMMAND} --leak-check=full --error-exitcode=1 ./calc_test solve)
 endif()

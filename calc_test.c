@@ -238,10 +238,10 @@ bool test_solveSimple(void) {
     return true;
 }
 
-bool test_evaluateParenthesizedExpression(void) {
+bool test_evaluateDelimitersExpression(void) {
     const char *w[] = {"(", "2", "+", "3", ")", "*", "4"};
     Calc *c = create_test_calc(7, w);
-    evaluateParenthesizedExpression(c);
+    evaluateDelimitersExpression(c);
     if (c->word[0] == NULL) {
         FreeCalc(c);
         return false;
@@ -310,8 +310,8 @@ int main(int argc, char * argv[]){
         ok = test_getPrio();
     } else if(strcmp("solveSimple", argv[1])==0){
         ok = test_solveSimple();
-    } else if(strcmp("evaluateParenthesizedExpression", argv[1])==0){
-        ok = test_evaluateParenthesizedExpression();
+    } else if(strcmp("evaluateDelimitersExpression", argv[1])==0){
+        ok = test_evaluateDelimitersExpression();
     } else if(strcmp("solve", argv[1])==0){
         ok = test_solve();
     } else {

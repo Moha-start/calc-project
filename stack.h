@@ -52,7 +52,8 @@ bool StackIsNULL(Stack *stack);
  * Removes the top node and returns the new stack head.
  *
  * @param stack Pointer to a non-empty stack.
- * @return The next node, or NULL if the removed node was the only node.
+ * @return The new stack head. If the removed node was the only node, returns
+ *         a newly allocated empty stack sentinel.
  * @note Exits with EXIT_FAILURE if the stack is NULL or empty.
  */
 Stack *StackPop(Stack *stack);
@@ -76,7 +77,7 @@ uint StackSize(Stack *stack);
 /**
  * Frees a stack and all of its nodes.
  *
- * @param stack Pointer to the stack to free; must not be NULL.
+ * @param stack Pointer to the stack to free; may be NULL.
  */
 void StackFree(Stack *stack);
 
@@ -91,7 +92,7 @@ char StackGetValue(Stack *stack);
 /**
  * Prints each node in the stack.
  *
- * @param stack Pointer to the stack to print; must not be NULL.
+ * @param stack Pointer to the stack to print. If NULL, nothing is printed.
  */
 void StackPrint(Stack *stack);
 

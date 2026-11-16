@@ -10,7 +10,11 @@ typedef enum Type {
     OPERATION,
     VARIABLE,
     DELIMITER,
+    SINGLEOPERATION,
 } Type; 
+#define PI 3.14159265358979323846
+#define E 2.71828182845904523536
+#define PRECISION 100
 /**
  * Holds an expression as a NULL-terminated array of strings.
  *
@@ -65,6 +69,14 @@ void FreeCalc(Calc *calc);
 bool AreDelimitersValid(Calc *calc);
 
 /**
+ * Removes trailing zeroes from a decimal string, also removing the decimal
+ * point if no fractional digits remain.
+ *
+ * @param str The mutable string to trim.
+ */
+void trim_trailing_zeros(char *str);
+
+/**
  * Counts the opening parentheses, square brackets and braces in an
  * expression.
  *
@@ -72,6 +84,16 @@ bool AreDelimitersValid(Calc *calc);
  * @return The total number of opening delimiters in the expression.
  */
 uint countOpeningDelimiters(Calc *calc);
+
+/**
+ * Evaluates a single string as an expression.
+ *
+ * @param c The expression string to evaluate. The string remains owned by
+ *          the caller.
+ * @return A newly allocated result string, or NULL if evaluation fails. The
+ *         caller is responsible for freeing the returned string.
+ */
+char *solveStr(char *c);
 
 /**
  * Writes the calculation's words to standard output for inspection.
@@ -90,10 +112,21 @@ void printCalc(Calc *calc);
 uint calctype(char c);
 
 /**
+ * Checks whether a token is the name of a supported single-argument
+ * operation (ln, log, sin, cos or tan).
+ *
+ * @param c The operation token to check.
+ * @return true if c names a supported single-argument operation; otherwise
+ *         false.
+ */
+bool isSingleOperation(char *c);
+
+/**
  * Classifies a word in an expression.
  *
- * @param c The word to classify. A one-character word is classified by its
- *          character; a longer word is treated as a number.
+ * @param c The word to classify. Single-character words are classified by
+ *          their character; supported named operations are classified as
+ *          SINGLEOPERATION, and other longer words are treated as numbers.
  * @return The matching Type value, or 99 for an unrecognized one-character
  *         word.
  */
@@ -152,29 +185,82 @@ char *fromDoobleToString(double number);
 bool isMixOperation(Calc *calc);
 
 /**
- * Applies one basic arithmetic operation to two values.
+ * Applies one arithmetic operation to two values.
  *
  * @param first The left-hand operand.
- * @param operation The operator: '+', '-', '*' or '/'.
+ * @param operation The operator: '+', '-', '*', '/', '^' or '%'.
  * @param last The right-hand operand.
  * @return The result of applying operation to first and last.
  */
 double calculateSimple(double first, char operation, double last,Calc * calc);
 
 /**
- * Finds the next multiplication or division operation in an expression.
+ * Finds the highest-precedence operation in an expression.
  *
  * @param calc The calculation to search.
- * @param index Output location for the index of the first '*' or '/' word.
- *              It is written only when such an operation is found.
- * @return true if a multiplication or division was found; otherwise false.
+ * @param index Output location for the index of the selected operation. It
+ *              is written only when an operation is found.
+ * @return true if an operation was found; otherwise false.
  */
 bool getPrio(Calc *calc, uint *index);
 
 /**
- * Evaluates an expression that contains numeric operands and basic arithmetic
- * operators, applying multiplication and division before addition and
- * subtraction.
+ * Returns the precedence rank of an operation token; smaller values indicate
+ * higher precedence.
+ *
+ * @param c The operation token.
+ * @return Its precedence rank, or 99 if it is not a recognized operation.
+ */
+uint getValueOpeartion(char *c);
+
+/**
+ * Checks whether the first operation token has strictly higher precedence
+ * than the second.
+ *
+ * @param c1 The first operation token.
+ * @param c2 The second operation token.
+ * @return true if c1 has higher precedence than c2; otherwise false.
+ */
+bool isPrio(char *c1, char *c2);
+
+/**
+ * Splits a parenthesized argument into one or two expressions and evaluates
+ * them.
+ *
+ * @param number The argument string, beginning with '('; a comma separates
+ *               the optional second expression.
+ * @param value Output array with room for two result pointers. The first
+ *              result is stored in value[0]; when a comma is present, the
+ *              second is stored in value[1]. Returned strings are
+ *              dynamically allocated and owned by the caller.
+ * @note Exits with EXIT_FAILURE if the argument does not begin with '(' or
+ *       memory allocation fails.
+ */
+void fromStringToDoubleDelimiteur(char *number, char **value);
+
+/**
+ * Evaluates a named single-argument operation on a numeric string.
+ *
+ * @param opearation The operation name.
+ * @param number The numeric argument as a string.
+ * @return A newly allocated result string, or NULL if allocation fails.
+ */
+char *calculateSingleOpearation(char *opearation, char *number);
+
+/**
+ * Solves the operand immediately following the operation at index and applies
+ * that operation.
+ *
+ * @param calc The tokenized calculation.
+ * @param index Index of the named operation token.
+ * @return A newly allocated result string, or NULL if allocation fails.
+ */
+char *solveSingleOperation(Calc *calc, uint index);
+
+/**
+ * Evaluates an expression containing numeric operands and arithmetic
+ * operators, applying higher-precedence operations before lower-precedence
+ * ones.
  *
  * @param calc The calculation to evaluate; its words must already represent
  *             individual operands and operators.
@@ -190,7 +276,15 @@ char *solveSimple(Calc *calc);
  * @param calc The calculation to update. Its delimiters are expected to be
  *             valid and its words tokenized.
  */
-void evaluateParenthesizedExpression(Calc *calc);
+void evaluateDelimitersExpression(Calc *calc);
+
+/**
+ * Evaluates named operations whose argument is a parenthesized token and
+ * replaces each operation and argument in the calculation with its result.
+ *
+ * @param calc The tokenized calculation to update.
+ */
+void evaluateSimpleOperation(Calc *calc);
 
 /**
  * Evaluates an arithmetic expression supplied as a NULL-terminated array of
@@ -198,8 +292,7 @@ void evaluateParenthesizedExpression(Calc *calc);
  *
  * The words are copied before processing, so the input array and its strings
  * remain owned by the caller. Delimiters are checked and arithmetic is
- * evaluated with multiplication and division taking precedence over addition
- * and subtraction.
+ * evaluated according to operator precedence.
  *
  * @param words The expression words, terminated by a NULL pointer.
  * @return A newly allocated string containing the numeric result, or NULL if
@@ -208,5 +301,4 @@ void evaluateParenthesizedExpression(Calc *calc);
  */
 char *solve(char **words);
 
-void trim_trailing_zeros(char *str);
 #endif /* CALC_H */
