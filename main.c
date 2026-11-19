@@ -16,12 +16,12 @@ int main(int argc, char **argv) {
     
     if (result == NULL) {
         if (input != NULL) {
-            FreeCalc(input);
+            freeCalc(input);
         }
         return EXIT_FAILURE;
     }
 
-    trim_trailing_zeros(result);
+    trimTrailingZeros(result);
     
     for (unsigned int j = 0; words[j] != NULL; j++) {
         printf("%s", words[j]);
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     free(result);
 
     if (input != NULL) {
-        FreeCalc(input);
+        freeCalc(input);
     }
     
     return EXIT_SUCCESS;

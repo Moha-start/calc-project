@@ -35,4 +35,4 @@ double mod(double first ,double last);
  * @param is_deg true is the angle is in degres and false if it is in radian.
  * @return The computed approximation.
  */
-double trigonometrie(double nb,bool isSin,bool is_deg);
+double computeTrig(double nb,bool isSin,bool is_deg);

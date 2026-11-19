@@ -19,7 +19,7 @@ double mod(double first, double last) {
     return first;
 }
 
-double trigonometrie(double nb, bool isSin, bool is_deg) {
+double computeTrig(double nb, bool isSin, bool is_deg) {
     if (is_deg) {
         nb = nb * (PI / 180.0);
     }

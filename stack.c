@@ -32,6 +32,7 @@ Stack * StackPush(Stack *stack, char value) {
 bool StackIsNULL(Stack *stack){
     return stack==NULL;
 }
+
 bool StackIsEmpty(Stack *stack) {
     if (stack == NULL) {
         fprintf(stderr, "NULL stack pointer in StackIsEmpty \n");
@@ -71,7 +72,7 @@ uint StackSize(Stack *stack) {
     }
     Stack *current = stack;
     uint size = 0;
-    while (!StackIsEmpty(current)) {
+    while (!StackIsNULL(current)&&!StackIsEmpty(current)) {
         size++;
         current = StackNext(current);
     }
